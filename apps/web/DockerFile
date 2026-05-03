@@ -1,0 +1,55 @@
+# ==================== BUILD STAGE ====================
+FROM node:20-alpine AS builder
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Set working directory
+WORKDIR /app
+
+# Copy workspace config
+COPY pnpm-workspace.yaml ./
+COPY package.json ./
+
+# Copy packages (database)
+COPY packages ./packages
+
+# Copy app
+COPY apps/web ./apps/web
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Generate Prisma Client
+RUN pnpm --filter @bpjs/database db:generate
+
+# Build packages
+RUN pnpm --filter @bpjs/database build
+
+# Build Next.js
+RUN pnpm --filter @bpjs/web build
+
+# ==================== PRODUCTION STAGE ====================
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Set environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Copy necessary files
+COPY --from=builder /app/pnpm-workspace.yaml ./
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/apps/web ./apps/web
+COPY --from=builder /app/node_modules ./node_modules
+
+# Expose port
+EXPOSE 3000
+
+# Start app
+CMD ["pnpm", "--filter", "@bpjs/web", "start"]

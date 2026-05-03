@@ -1,0 +1,16 @@
+{
+  "name": "bpjs-enterprise",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @bpjs/web dev",
+    "build": "pnpm --filter @bpjs/database build && pnpm --filter @bpjs/web build",
+    "db:generate": "pnpm --filter @bpjs/database db:generate",
+    "db:migrate": "pnpm --filter @bpjs/database db:migrate",
+    "db:studio": "pnpm --filter @bpjs/database db:studio",
+    "db:push": "cd packages/database && npx prisma db push"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
